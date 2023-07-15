@@ -1,5 +1,4 @@
 use bevy::prelude::*;
-use bevy_rapier3d::prelude::*;
 
 pub mod components;
 
@@ -16,7 +15,7 @@ pub struct Game;
 
 impl Plugin for Game {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, setup_physics)
+        app.add_systems(Startup, lights)
             .add_systems(Startup, spawn_player);
     }
 }
@@ -42,19 +41,7 @@ fn spawn_player(
     });
 }
 
-fn setup_physics(mut commands: Commands) {
-    /* Create the ground. */
-    // commands
-    //     .spawn(Collider::cuboid(0.0, 50.0, 0.0))
-    //     .insert(TransformBundle::from(Transform::from_xyz(0.0, -100.0, 0.0)));
-
-    // /* Create the bouncing ball. */
-    // commands
-    //     .spawn(RigidBody::Dynamic)
-    //     .insert(Collider::ball(50.0))
-    //     .insert(Restitution::coefficient(0.7))
-    //     .insert(TransformBundle::from(Transform::from_xyz(0.0, 400.0, 0.0)));
-
+fn lights(mut commands: Commands) {
     commands.insert_resource(AmbientLight {
         color: Color::ORANGE_RED,
         brightness: 0.02,
