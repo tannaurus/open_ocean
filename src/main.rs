@@ -2,6 +2,7 @@ use bevy::prelude::*;
 
 pub mod components;
 
+use bevy_water::{ImageUtilsPlugin, WaterPlugin};
 use components::{id, player};
 
 const PLAYER_SPEED: f32 = 1.0;
@@ -9,6 +10,10 @@ const PLAYER_SPEED: f32 = 1.0;
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
+        // water plugins
+        .add_plugins(WaterPlugin)
+        .add_plugins(ImageUtilsPlugin)
+        // core game plugins
         .add_plugins(Game)
         .run();
 }
@@ -43,7 +48,7 @@ fn player(
     commands.spawn((
         player::PlayerCamera,
         Camera3dBundle {
-            transform: Transform::from_xyz(0.0, 5.0, 5.0).looking_at(Vec3::ZERO, Vec3::Y),
+            transform: Transform::from_xyz(0.0, 10.0, 20.0).looking_at(Vec3::ZERO, Vec3::Y),
             ..default()
         },
     ));
@@ -98,7 +103,7 @@ fn world(
 
 fn lights(mut commands: Commands) {
     commands.insert_resource(AmbientLight {
-        color: Color::ORANGE_RED,
-        brightness: 0.5,
+        color: Color::WHITE,
+        brightness: 0.8,
     });
 }
