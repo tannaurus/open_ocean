@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{app::AppExit, input::mouse::MouseMotion, prelude::*};
 
 pub mod components;
 
@@ -6,6 +6,7 @@ use bevy_water::{ImageUtilsPlugin, WaterPlugin};
 use components::{id, player};
 
 const PLAYER_SPEED: f32 = 1.0;
+const CAMERA_SPEED: f32 = 1.0;
 
 fn main() {
     App::new()
@@ -25,7 +26,14 @@ impl Plugin for Game {
         app.add_systems(Startup, lights)
             .add_systems(Startup, world)
             .add_systems(Startup, player)
-            .add_systems(Update, player_controller);
+            .add_systems(Update, player_controller)
+            .add_systems(Update, quit);
+    }
+}
+
+fn quit(keyboard: Res<Input<KeyCode>>, mut exit: EventWriter<AppExit>) {
+    if keyboard.just_pressed(KeyCode::Escape) {
+        exit.send(AppExit);
     }
 }
 
@@ -57,6 +65,7 @@ fn player(
 fn player_controller(
     mut player: Query<&mut Transform, (With<player::Player>, Without<player::PlayerCamera>)>,
     mut camera: Query<&mut Transform, (With<player::PlayerCamera>, Without<player::Player>)>,
+    mut mouse: EventReader<MouseMotion>,
     keyboard: Res<Input<KeyCode>>,
     time: Res<Time>,
 ) {
@@ -81,7 +90,21 @@ fn player_controller(
     let mut player = player.single_mut();
     let mut camera = camera.single_mut();
 
+    // adjust camera for mouse position
+    for mouse in mouse.iter() {
+        camera.translation +=
+            Vec3::new(mouse.delta.x, mouse.delta.y, 0.0) * CAMERA_SPEED * time.delta_seconds();
+
+        camera.translation = Vec3::new(
+            camera.translation.x.clamp(-15.0, 15.0),
+            camera.translation.y.clamp(6.0, 20.0),
+            camera.translation.z,
+        );
+    }
+
+    // update player position based on input
     player.translation += direction * PLAYER_SPEED * time.delta_seconds();
+    // update camera position based on player
     camera.translation += direction * PLAYER_SPEED * time.delta_seconds();
     camera.look_at(player.translation, Vec3::Y);
 }
