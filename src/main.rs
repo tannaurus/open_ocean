@@ -1,3 +1,6 @@
+use std::time::Duration;
+
+use bevy::asset::ChangeWatcher;
 use bevy::{app::AppExit, input::mouse::MouseMotion, prelude::*};
 
 pub mod components;
@@ -10,7 +13,11 @@ const CAMERA_SPEED: f32 = 1.0;
 
 fn main() {
     App::new()
-        .add_plugins(DefaultPlugins)
+        .add_plugins(DefaultPlugins.set(AssetPlugin {
+            // Tell the asset server to watch for asset changes on disk:
+            watch_for_changes: ChangeWatcher::with_delay(Duration::from_millis(200)),
+            ..default()
+        }))
         // water plugins
         .add_plugins(WaterPlugin)
         .add_plugins(ImageUtilsPlugin)
@@ -39,24 +46,43 @@ fn quit(keyboard: Res<Input<KeyCode>>, mut exit: EventWriter<AppExit>) {
 
 fn player(
     mut commands: Commands,
+    asset_server: Res<AssetServer>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    commands.spawn((
-        player::Player,
-        id::Name::new("player_1".to_string()),
-        PbrBundle {
-            mesh: meshes.add(Mesh::from(shape::Capsule {
+    let ship_handle = asset_server.load("models/pirate_ship/dutch_ship_large_01_1k.gltf#Scene0");
+    commands
+        .spawn((
+            player::Player,
+            id::Name::new("player_1".to_string()),
+            PbrBundle {
+                mesh: meshes.add(Mesh::from(shape::Capsule {
+                    ..Default::default()
+                })),
+                material: materials.add(Color::rgb(0.3, 0.5, 0.3).into()),
+                ..default()
+            },
+        ))
+        .with_children(|parent| {
+            parent.spawn(SceneBundle {
+                scene: ship_handle.clone(),
                 ..Default::default()
-            })),
-            material: materials.add(Color::rgb(0.3, 0.5, 0.3).into()),
-            ..default()
-        },
-    ));
+            });
+        });
+
     commands.spawn((
         player::PlayerCamera,
         Camera3dBundle {
             transform: Transform::from_xyz(0.0, 10.0, 20.0).looking_at(Vec3::ZERO, Vec3::Y),
+            ..default()
+        },
+        FogSettings {
+            color: Color::rgba(0.6, 0.6, 0.6, 1.0),
+            falloff: FogFalloff::from_visibility_colors(
+                200.0,
+                Color::rgb(0.35, 0.5, 0.66),
+                Color::rgb(0.8, 0.844, 1.0),
+            ),
             ..default()
         },
     ));
