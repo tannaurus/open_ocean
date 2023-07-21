@@ -1,15 +1,15 @@
+use bevy::{app::AppExit, asset::ChangeWatcher, input::mouse::MouseMotion, prelude::*};
+use bevy_water::{ImageUtilsPlugin, WaterPlugin};
 use std::time::Duration;
 
-use bevy::asset::ChangeWatcher;
-use bevy::{app::AppExit, input::mouse::MouseMotion, prelude::*};
-
-pub mod components;
-
-use bevy_water::{ImageUtilsPlugin, WaterPlugin};
+mod components;
 use components::{id, player};
 
-const PLAYER_SPEED: f32 = 1.0;
+const PLAYER_SPEED: f32 = 6.0;
 const CAMERA_SPEED: f32 = 1.0;
+const CAMERA_MAX_HEIGHT: f32 = 40.0;
+// Max distance camera can pan left and right
+const CAMERA_MAX_PAN: (f32, f32) = (-25.0, 25.0);
 
 fn main() {
     App::new()
@@ -32,8 +32,8 @@ impl Plugin for Game {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, lights)
             .add_systems(Startup, world)
-            .add_systems(Startup, player)
-            .add_systems(Update, player_controller)
+            .add_systems(Startup, spawn_ship)
+            .add_systems(Update, ship_controller)
             .add_systems(Update, quit);
     }
 }
@@ -44,7 +44,7 @@ fn quit(keyboard: Res<Input<KeyCode>>, mut exit: EventWriter<AppExit>) {
     }
 }
 
-fn player(
+fn spawn_ship(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut meshes: ResMut<Assets<Mesh>>,
@@ -66,6 +66,10 @@ fn player(
         .with_children(|parent| {
             parent.spawn(SceneBundle {
                 scene: ship_handle.clone(),
+                // Rotate ship model to line up with rotation axis.
+                transform: Transform::from_rotation(Quat::from_rotation_y(
+                    std::f32::consts::FRAC_PI_2,
+                )),
                 ..Default::default()
             });
         });
@@ -73,23 +77,19 @@ fn player(
     commands.spawn((
         player::PlayerCamera,
         Camera3dBundle {
-            transform: Transform::from_xyz(0.0, 10.0, 20.0).looking_at(Vec3::ZERO, Vec3::Y),
+            transform: Transform::from_xyz(0.0, 10.0, 40.0).looking_at(Vec3::ZERO, Vec3::Y),
             ..default()
         },
         FogSettings {
             color: Color::rgba(0.6, 0.6, 0.6, 1.0),
-            falloff: FogFalloff::from_visibility_colors(
-                200.0,
-                Color::rgb(0.35, 0.5, 0.66),
-                Color::rgb(0.8, 0.844, 1.0),
-            ),
+            falloff: FogFalloff::Exponential { density: 0.0003 },
             ..default()
         },
     ));
 }
 
-fn player_controller(
-    mut player: Query<&mut Transform, (With<player::Player>, Without<player::PlayerCamera>)>,
+fn ship_controller(
+    mut ship: Query<&mut Transform, (With<player::Player>, Without<player::PlayerCamera>)>,
     mut camera: Query<&mut Transform, (With<player::PlayerCamera>, Without<player::Player>)>,
     mut mouse: EventReader<MouseMotion>,
     keyboard: Res<Input<KeyCode>>,
@@ -113,7 +113,7 @@ fn player_controller(
         direction = direction.normalize();
     }
 
-    let mut player = player.single_mut();
+    let mut ship = ship.single_mut();
     let mut camera = camera.single_mut();
 
     // adjust camera for mouse position
@@ -122,17 +122,20 @@ fn player_controller(
             Vec3::new(mouse.delta.x, mouse.delta.y, 0.0) * CAMERA_SPEED * time.delta_seconds();
 
         camera.translation = Vec3::new(
-            camera.translation.x.clamp(-15.0, 15.0),
-            camera.translation.y.clamp(6.0, 20.0),
+            camera
+                .translation
+                .x
+                .clamp(CAMERA_MAX_PAN.0, CAMERA_MAX_PAN.1),
+            camera.translation.y.clamp(6.0, CAMERA_MAX_HEIGHT),
             camera.translation.z,
         );
     }
 
     // update player position based on input
-    player.translation += direction * PLAYER_SPEED * time.delta_seconds();
+    ship.translation += direction * PLAYER_SPEED * time.delta_seconds();
     // update camera position based on player
     camera.translation += direction * PLAYER_SPEED * time.delta_seconds();
-    camera.look_at(player.translation, Vec3::Y);
+    camera.look_at(ship.translation, Vec3::Y);
 }
 
 fn world(
@@ -153,6 +156,6 @@ fn world(
 fn lights(mut commands: Commands) {
     commands.insert_resource(AmbientLight {
         color: Color::WHITE,
-        brightness: 0.8,
+        brightness: 1.5,
     });
 }
