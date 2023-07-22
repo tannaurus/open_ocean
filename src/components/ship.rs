@@ -58,6 +58,14 @@ impl SailState {
             Self::Full => ship_forward * 4.0,
         }
     }
+
+    fn as_rotation_speed(&self) -> f32 {
+        match self {
+            Self::None => 0.1,
+            Self::Mid => 0.5,
+            Self::Full => 1.0,
+        }
+    }
 }
 
 #[derive(Component, Default)]
@@ -67,9 +75,6 @@ pub struct Ship {
 
 #[derive(Component)]
 pub struct ShipCamera;
-
-#[derive(Component)]
-pub struct ShipModel;
 
 /// A child component of the ship that remains in a fixed relative position
 /// above the model. [ShipCamera] uses this component's location to determine its X bounds.
@@ -94,17 +99,14 @@ impl Systems {
                 },
             ))
             .with_children(|parent| {
-                parent.spawn((
-                    ShipModel,
-                    SceneBundle {
-                        scene: ship_handle.clone(),
-                        // Rotate ship model to line up with rotation axis.
-                        transform: Transform::from_rotation(Quat::from_rotation_y(
-                            std::f32::consts::FRAC_PI_2,
-                        )),
-                        ..Default::default()
-                    },
-                ));
+                parent.spawn((SceneBundle {
+                    scene: ship_handle.clone(),
+                    // Rotate ship model to line up with rotation axis.
+                    transform: Transform::from_rotation(Quat::from_rotation_y(
+                        std::f32::consts::FRAC_PI_2,
+                    )),
+                    ..Default::default()
+                },));
                 // spawn ship camera
                 parent.spawn((
                     ShipCamera,
@@ -141,10 +143,20 @@ impl Systems {
         }
 
         if keyboard.pressed(KeyCode::D) {
-            ship.rotate_y(SHIP_TURN_SPEED.0 * TAU * time.delta_seconds());
+            ship.rotate_y(
+                SHIP_TURN_SPEED.0
+                    * ship_state.sails.as_rotation_speed()
+                    * TAU
+                    * time.delta_seconds(),
+            );
         }
         if keyboard.pressed(KeyCode::A) {
-            ship.rotate_y(SHIP_TURN_SPEED.1 * TAU * time.delta_seconds());
+            ship.rotate_y(
+                SHIP_TURN_SPEED.1
+                    * ship_state.sails.as_rotation_speed()
+                    * TAU
+                    * time.delta_seconds(),
+            );
         }
 
         // Adjust camera for mouse position
