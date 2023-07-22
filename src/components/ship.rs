@@ -2,6 +2,7 @@ use std::f32::consts::TAU;
 
 use bevy::{input::mouse::MouseMotion, prelude::*};
 use bevy_atmosphere::prelude::*;
+use bevy_rapier3d::prelude::*;
 
 use crate::id::Name;
 
@@ -14,6 +15,8 @@ const CAMERA_MAX_HEIGHT: f32 = 40.0;
 const CAMERA_MAX_PAN: (f32, f32) = (-40.0, 40.0);
 
 const CAMERA_BASE_OFFSET: Vec3 = Vec3::new(0.0, 30.0, 60.0);
+
+const CANNON_SPEED: f32 = 100.0;
 
 #[derive(Bundle)]
 pub struct ShipBundle {
@@ -94,6 +97,7 @@ impl Systems {
                     name: Name::new("Eleanor"),
                     ship: Default::default(),
                 },
+                Cannons {},
                 SpatialBundle {
                     ..Default::default()
                 },
@@ -125,7 +129,7 @@ impl Systems {
             });
     }
 
-    pub fn ship_controller(
+    pub fn movement(
         mut ship: Query<(&mut Transform, &mut Ship)>,
         keyboard: Res<Input<KeyCode>>,
         time: Res<Time>,
@@ -165,7 +169,7 @@ impl Systems {
         ship.translation += ship_offset;
     }
 
-    pub fn ship_camera_controller(
+    pub fn camera(
         mut camera: Query<&mut Transform, With<ShipCamera>>,
         mut mouse: EventReader<MouseMotion>,
         time: Res<Time>,
@@ -194,5 +198,83 @@ impl Systems {
 
         // Have the camera look at a point relative to the parent (ship) component
         camera.look_at(Vec3::new(0.0, 10.0, 0.0), Vec3::Y);
+    }
+
+    pub fn cannons(
+        mut commands: Commands,
+        mut ship: Query<(&mut Cannons, &Transform), With<Ship>>,
+        keyboard: Res<Input<KeyCode>>,
+    ) {
+        let (mut cannons, ship_transform) = ship.single_mut();
+        if keyboard.just_pressed(KeyCode::Q) {
+            cannons.fire(&mut commands, ship_transform, CannonDirection::Left);
+        }
+
+        if keyboard.just_pressed(KeyCode::E) {
+            cannons.fire(&mut commands, ship_transform, CannonDirection::Right);
+        }
+    }
+}
+
+#[derive(Component)]
+pub struct Cannons {}
+
+impl Cannons {
+    fn fire(
+        &mut self,
+        commands: &mut Commands,
+        ship_transform: &Transform,
+        direction: CannonDirection,
+    ) {
+        let instance = CannonBall::instance(ship_transform, direction);
+        commands.spawn(CannonBall::adjust_fire_location(instance.clone(), -10.0));
+        commands.spawn(CannonBall::adjust_fire_location(instance.clone(), -5.0));
+        commands.spawn(instance);
+    }
+}
+
+#[derive(Bundle, Clone)]
+struct CannonBall {
+    rigidbody: RigidBody,
+    collider: Collider,
+    restitution: Restitution,
+    velocity: Velocity,
+    transform: TransformBundle,
+}
+
+enum CannonDirection {
+    Left,
+    Right,
+}
+
+impl CannonDirection {
+    fn as_linvel(&self) -> f32 {
+        match self {
+            Self::Left => -1.0,
+            Self::Right => 1.0,
+        }
+    }
+}
+
+impl CannonBall {
+    fn instance(ship_transform: &Transform, direction: CannonDirection) -> Self {
+        let mut transform = TransformBundle::from(ship_transform.clone());
+        // Adjust launch height so they don't launch below the water line
+        transform.local.translation += Vec3::new(0.0, 2.0, 0.0);
+        Self {
+            rigidbody: RigidBody::Dynamic,
+            collider: Collider::ball(1.0),
+            restitution: Restitution::coefficient(0.7),
+            velocity: Velocity {
+                linvel: ship_transform.local_x() * CANNON_SPEED * direction.as_linvel(),
+                angvel: Vec3::new(0.0, 10.0, 0.0),
+            },
+            transform,
+        }
+    }
+
+    fn adjust_fire_location(mut cannon_ball: Self, amount: f32) -> Self {
+        cannon_ball.transform.local.translation += Vec3::new(0.0, 0.0, amount);
+        cannon_ball
     }
 }

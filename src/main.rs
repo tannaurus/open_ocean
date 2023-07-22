@@ -1,5 +1,6 @@
 use bevy::{app::AppExit, asset::ChangeWatcher, prelude::*};
 use bevy_atmosphere::prelude::*;
+use bevy_rapier3d::prelude::*;
 use bevy_water::{ImageUtilsPlugin, WaterPlugin, WaterSettings};
 use std::time::Duration;
 
@@ -13,6 +14,8 @@ fn main() {
             watch_for_changes: ChangeWatcher::with_delay(Duration::from_millis(200)),
             ..default()
         }))
+        .add_plugins(RapierPhysicsPlugin::<NoUserData>::default())
+        .add_plugins(RapierDebugRenderPlugin::default())
         // water plugins
         .add_plugins(WaterPlugin)
         .add_plugins(ImageUtilsPlugin)
@@ -34,8 +37,9 @@ impl Plugin for Game {
         app.add_systems(Startup, lights)
             .add_systems(Startup, world)
             .add_systems(Startup, ship::Systems::spawn_ship)
-            .add_systems(Update, ship::Systems::ship_controller)
-            .add_systems(Update, ship::Systems::ship_camera_controller)
+            .add_systems(Update, ship::Systems::movement)
+            .add_systems(Update, ship::Systems::camera)
+            .add_systems(Update, ship::Systems::cannons)
             .add_systems(Update, quit);
     }
 }
