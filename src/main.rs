@@ -35,6 +35,7 @@ impl Plugin for Game {
             .add_systems(Startup, world)
             .add_systems(Startup, ship::Systems::spawn_ship)
             .add_systems(Update, ship::Systems::ship_controller)
+            .add_systems(Update, ship::Systems::ship_camera_controller)
             .add_systems(Update, quit);
     }
 }

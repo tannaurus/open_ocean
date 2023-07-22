@@ -11,7 +11,7 @@ const SHIP_TURN_SPEED: (f32, f32) = (-0.05, 0.05);
 const CAMERA_SPEED: f32 = 1.0;
 const CAMERA_MAX_HEIGHT: f32 = 40.0;
 // Max distance camera can pan left and right
-const CAMERA_MAX_PAN: f32 = 40.0;
+const CAMERA_MAX_PAN: (f32, f32) = (-40.0, 40.0);
 
 const CAMERA_BASE_OFFSET: Vec3 = Vec3::new(0.0, 30.0, 60.0);
 
@@ -126,14 +126,11 @@ impl Systems {
     }
 
     pub fn ship_controller(
-        mut ship: Query<(&mut Transform, &mut Ship), (With<Ship>, Without<ShipCamera>)>,
-        mut camera: Query<&mut Transform, (With<ShipCamera>, Without<Ship>)>,
-        mut mouse: EventReader<MouseMotion>,
+        mut ship: Query<(&mut Transform, &mut Ship)>,
         keyboard: Res<Input<KeyCode>>,
         time: Res<Time>,
     ) {
         let (mut ship, mut ship_state) = ship.single_mut();
-        let mut camera = camera.single_mut();
 
         // Change sails position
         if keyboard.just_pressed(KeyCode::W) {
@@ -159,13 +156,6 @@ impl Systems {
             );
         }
 
-        // Adjust camera for mouse position
-        let mut camera_input_offset = Vec3::ZERO;
-        for mouse in mouse.iter() {
-            camera_input_offset =
-                Vec3::new(mouse.delta.x, mouse.delta.y, 0.0) * CAMERA_SPEED * time.delta_seconds();
-        }
-
         let ship_offset = Vec3::ZERO
             + ship_state.sails.as_forward_speed(ship.forward().clone())
                 * SHIP_SPEED
@@ -173,16 +163,30 @@ impl Systems {
 
         // Update player position based on input
         ship.translation += ship_offset;
+    }
+
+    pub fn ship_camera_controller(
+        mut camera: Query<&mut Transform, With<ShipCamera>>,
+        mut mouse: EventReader<MouseMotion>,
+        time: Res<Time>,
+    ) {
+        let mut camera = camera.single_mut();
+        // Adjust camera for mouse position
+        let mut camera_input_offset = Vec3::ZERO;
+        for mouse in mouse.iter() {
+            camera_input_offset =
+                Vec3::new(mouse.delta.x, mouse.delta.y, 0.0) * CAMERA_SPEED * time.delta_seconds();
+        }
 
         // Update camera position based on ship position and mouse inputs
         camera.translation += camera_input_offset;
 
         // Apply restrictions to ensure the camera is within its bounds, relative to player position
         camera.translation = Vec3::new(
-            camera.translation.x.clamp(
-                ship.local_x().x - CAMERA_MAX_PAN,
-                ship.local_x().x + CAMERA_MAX_PAN,
-            ),
+            camera
+                .translation
+                .x
+                .clamp(CAMERA_MAX_PAN.0, CAMERA_MAX_PAN.1),
             // NOTE: Not relative to player position. This shouldn't cause issues, unless the waves are huge.
             camera.translation.y.clamp(6.0, CAMERA_MAX_HEIGHT),
             camera.translation.z,
