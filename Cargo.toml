@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 bevy = {version = "0.11.0", features = ["jpeg"] }
 bevy_water = "0.11.3"
+bevy_atmosphere = "0.7" 
 
 # Bevy requirements
 [workspace]

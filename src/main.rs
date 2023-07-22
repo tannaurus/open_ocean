@@ -1,4 +1,5 @@
 use bevy::{app::AppExit, asset::ChangeWatcher, prelude::*};
+use bevy_atmosphere::prelude::*;
 use bevy_water::{ImageUtilsPlugin, WaterPlugin, WaterSettings};
 use std::time::Duration;
 
@@ -15,6 +16,7 @@ fn main() {
         // water plugins
         .add_plugins(WaterPlugin)
         .add_plugins(ImageUtilsPlugin)
+        .add_plugins(AtmospherePlugin)
         .insert_resource(WaterSettings {
             height: 1.0,
             amplitude: 2.0,

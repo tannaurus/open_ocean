@@ -1,6 +1,7 @@
 use std::f32::consts::TAU;
 
 use bevy::{input::mouse::MouseMotion, prelude::*};
+use bevy_atmosphere::prelude::*;
 
 use crate::id::Name;
 
@@ -112,6 +113,7 @@ impl Systems {
                             .looking_at(Vec3::ZERO, Vec3::Y),
                         ..default()
                     },
+                    AtmosphereCamera::default(),
                     FogSettings {
                         color: Color::rgba(0.6, 0.6, 0.6, 1.0),
                         falloff: FogFalloff::Exponential { density: 0.0003 },
