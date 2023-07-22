@@ -1,4 +1,4 @@
-use std::f32::consts::TAU;
+use std::{f32::consts::TAU, time::Duration};
 
 use bevy::{input::mouse::MouseMotion, prelude::*};
 use bevy_atmosphere::prelude::*;
@@ -97,7 +97,7 @@ impl Systems {
                     name: Name::new("Eleanor"),
                     ship: Default::default(),
                 },
-                Cannons {},
+                Cannons::new(1),
                 SpatialBundle {
                     ..Default::default()
                 },
@@ -204,28 +204,73 @@ impl Systems {
         mut commands: Commands,
         mut ship: Query<(&mut Cannons, &Transform), With<Ship>>,
         keyboard: Res<Input<KeyCode>>,
+        time: Res<Time>,
     ) {
         let (mut cannons, ship_transform) = ship.single_mut();
         if keyboard.just_pressed(KeyCode::Q) {
-            cannons.fire(&mut commands, ship_transform, CannonDirection::Left);
+            cannons.fire(
+                &mut commands,
+                time.elapsed(),
+                ship_transform,
+                CannonDirection::Left,
+            );
         }
 
         if keyboard.just_pressed(KeyCode::E) {
-            cannons.fire(&mut commands, ship_transform, CannonDirection::Right);
+            cannons.fire(
+                &mut commands,
+                time.elapsed(),
+                ship_transform,
+                CannonDirection::Right,
+            );
         }
     }
 }
 
 #[derive(Component)]
-pub struct Cannons {}
+pub struct Cannons {
+    reload_speed: u64,
+    left_last_launched: Duration,
+    right_last_launched: Duration,
+}
 
 impl Cannons {
+    fn new(reload_speed: u64) -> Self {
+        Self {
+            reload_speed,
+            left_last_launched: Duration::from_secs(0),
+            right_last_launched: Duration::from_secs(0),
+        }
+    }
+
     fn fire(
         &mut self,
         commands: &mut Commands,
+        time_elapsed: Duration,
         ship_transform: &Transform,
         direction: CannonDirection,
     ) {
+        // Check if this direction's cannons are still being reloaded
+        // If they have already been reloaded, mark this direction as launched.
+        match direction {
+            CannonDirection::Left => {
+                if time_elapsed < self.left_last_launched + Duration::from_secs(self.reload_speed) {
+                    println!("Reloading these cannons! 🏴‍☠️");
+                    return;
+                } else {
+                    self.left_last_launched = time_elapsed;
+                }
+            }
+            CannonDirection::Right => {
+                if time_elapsed < self.right_last_launched + Duration::from_secs(self.reload_speed)
+                {
+                    println!("Reloading these cannons! 🏴‍☠️");
+                    return;
+                } else {
+                    self.right_last_launched = time_elapsed;
+                }
+            }
+        }
         let instance = CannonBall::instance(ship_transform, direction);
         commands.spawn(CannonBall::adjust_fire_location(instance.clone(), -10.0));
         commands.spawn(CannonBall::adjust_fire_location(instance.clone(), -5.0));
@@ -240,6 +285,7 @@ struct CannonBall {
     restitution: Restitution,
     velocity: Velocity,
     transform: TransformBundle,
+    gravity: GravityScale,
 }
 
 enum CannonDirection {
@@ -266,10 +312,12 @@ impl CannonBall {
             collider: Collider::ball(1.0),
             restitution: Restitution::coefficient(0.7),
             velocity: Velocity {
-                linvel: ship_transform.local_x() * CANNON_SPEED * direction.as_linvel(),
-                angvel: Vec3::new(0.0, 10.0, 0.0),
+                linvel: ship_transform.local_x() * CANNON_SPEED * direction.as_linvel()
+                    + (Vec3::Y * 20.0),
+                angvel: Vec3::ZERO,
             },
             transform,
+            gravity: GravityScale(3.0),
         }
     }
 
