@@ -4,7 +4,7 @@ use bevy::{input::mouse::MouseMotion, prelude::*};
 
 use super::camera::ShipCamera;
 use super::cannons::CannonDirection;
-use super::{spawn_ship, Ship, ShipMarker};
+use super::{spawn_ship, PlayerShip, Ship, ShipMarker};
 
 const SHIP_SPEED: f32 = 6.0;
 // Base ship turn speed. Will be modified by the ship's velocity.
@@ -17,10 +17,11 @@ const CAMERA_MAX_PAN: (f32, f32) = (-40.0, 40.0);
 pub struct Systems;
 impl Systems {
     pub fn spawn_ship(commands: Commands, asset_server: Res<AssetServer>) {
-        spawn_ship(ShipMarker::Player, commands, asset_server);
+        spawn_ship(ShipMarker::Player, "Eleanor", commands, asset_server);
     }
+
     pub fn movement(
-        mut ship: Query<(&mut Transform, &mut Ship)>,
+        mut ship: Query<(&mut Transform, &mut Ship), With<PlayerShip>>,
         keyboard: Res<Input<KeyCode>>,
         time: Res<Time>,
     ) {
@@ -92,7 +93,7 @@ impl Systems {
 
     pub fn cannons(
         mut commands: Commands,
-        mut ship: Query<(&mut Ship, &Transform)>,
+        mut ship: Query<(&mut Ship, &Transform), With<PlayerShip>>,
         keyboard: Res<Input<KeyCode>>,
         time: Res<Time>,
     ) {

@@ -5,7 +5,10 @@ use bevy_water::{ImageUtilsPlugin, WaterPlugin, WaterSettings};
 use std::time::Duration;
 
 mod components;
-use components::{id, ship::player_ship};
+use components::{
+    id,
+    ship::{enemy, player},
+};
 mod ui;
 
 fn main() {
@@ -39,18 +42,19 @@ impl Plugin for GameMechanics {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, lights)
             .add_systems(Startup, world)
-            .add_systems(Startup, player_ship::Systems::spawn_ship)
+            .add_systems(Startup, player::Systems::spawn_ship)
+            .add_systems(Startup, enemy::Systems::spawn_ship)
             .add_systems(
                 Update,
-                player_ship::Systems::movement.run_if(state_exists_and_equals(MenuState::Ship)),
+                player::Systems::movement.run_if(state_exists_and_equals(MenuState::Ship)),
             )
             .add_systems(
                 Update,
-                player_ship::Systems::camera.run_if(state_exists_and_equals(MenuState::Ship)),
+                player::Systems::camera.run_if(state_exists_and_equals(MenuState::Ship)),
             )
             .add_systems(
                 Update,
-                player_ship::Systems::cannons.run_if(state_exists_and_equals(MenuState::Ship)),
+                player::Systems::cannons.run_if(state_exists_and_equals(MenuState::Ship)),
             );
     }
 }

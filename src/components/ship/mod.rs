@@ -4,7 +4,8 @@ use cannons::Cannons;
 
 mod camera;
 mod cannons;
-pub mod player_ship;
+pub mod enemy;
+pub mod player;
 mod sails;
 
 #[derive(Bundle, Default)]
@@ -21,18 +22,35 @@ pub struct Ship {
     cannons: Cannons,
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Clone)]
 pub enum ShipMarker {
     Player,
     Enemy,
 }
 
-pub fn spawn_ship(marker: ShipMarker, mut commands: Commands, asset_server: Res<AssetServer>) {
+#[derive(Component)]
+pub struct PlayerShip;
+
+#[derive(Component)]
+pub struct EnemyShip;
+
+pub fn spawn_ship(
+    marker: ShipMarker,
+    name: &'static str,
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+) {
     let ship_handle = asset_server.load("models/pirate_ship/dutch_ship_large_01_1k.gltf#Scene0");
+
     let mut ship = commands.spawn(ShipBundle {
-        name: Name::new("Eleanor"),
+        name: Name::new(name),
         ..default()
     });
+
+    match marker {
+        ShipMarker::Player => ship.insert(PlayerShip),
+        ShipMarker::Enemy => ship.insert(EnemyShip),
+    };
 
     ship.with_children(|parent| {
         parent.spawn(SceneBundle {
