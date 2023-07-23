@@ -22,14 +22,6 @@ impl Default for Cannons {
 }
 
 impl Cannons {
-    pub fn new(reload_speed: u64) -> Self {
-        Self {
-            reload_speed,
-            left_last_launched: Duration::from_secs(0),
-            right_last_launched: Duration::from_secs(0),
-        }
-    }
-
     pub fn fire(
         &mut self,
         commands: &mut Commands,

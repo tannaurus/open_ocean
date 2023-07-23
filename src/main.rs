@@ -5,10 +5,7 @@ use bevy_water::{ImageUtilsPlugin, WaterPlugin, WaterSettings};
 use std::time::Duration;
 
 mod components;
-use components::{
-    id,
-    ship::{enemy, player},
-};
+use components::ship::{enemy, player};
 mod ui;
 
 fn main() {
