@@ -1,4 +1,4 @@
-use bevy::{app::AppExit, asset::ChangeWatcher, prelude::*};
+use bevy::{asset::ChangeWatcher, prelude::*};
 use bevy_atmosphere::prelude::*;
 use bevy_rapier3d::prelude::*;
 use bevy_water::{ImageUtilsPlugin, WaterPlugin, WaterSettings};
@@ -28,7 +28,7 @@ fn main() {
             ..Default::default()
         })
         // Core game plugins
-        .add_state::<ui::MenuState>()
+        .add_state::<MenuState>()
         .add_plugins(Ui)
         .add_plugins(GameMechanics)
         .run();
@@ -42,15 +42,15 @@ impl Plugin for GameMechanics {
             .add_systems(Startup, ship::Systems::spawn_ship)
             .add_systems(
                 Update,
-                ship::Systems::movement.run_if(state_exists_and_equals(ui::MenuState::Ship)),
+                ship::Systems::movement.run_if(state_exists_and_equals(MenuState::Ship)),
             )
             .add_systems(
                 Update,
-                ship::Systems::camera.run_if(state_exists_and_equals(ui::MenuState::Ship)),
+                ship::Systems::camera.run_if(state_exists_and_equals(MenuState::Ship)),
             )
             .add_systems(
                 Update,
-                ship::Systems::cannons.run_if(state_exists_and_equals(ui::MenuState::Ship)),
+                ship::Systems::cannons.run_if(state_exists_and_equals(MenuState::Ship)),
             );
     }
 }
@@ -58,39 +58,37 @@ impl Plugin for GameMechanics {
 pub struct Ui;
 impl Plugin for Ui {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, toggle_pause_menu);
+        app.add_systems(Update, ui::pause::change_menu_state)
+            .add_systems(OnEnter(MenuState::Pause), ui::pause::render_pause_menu)
+            .add_systems(OnExit(MenuState::Pause), ui::pause::close_pause_menu)
+            .add_systems(
+                Update,
+                ui::pause::pause_menu_interactions
+                    .run_if(state_exists_and_equals(MenuState::Pause)),
+            );
     }
 }
 
-// fn quit(keyboard: Res<Input<KeyCode>>, mut exit: EventWriter<AppExit>) {
-//     if keyboard.just_pressed(KeyCode::Escape) {
-//         exit.send(AppExit);
-//     }
-// }
+#[derive(States, Debug, Hash, Eq, PartialEq, Clone)]
+pub enum MenuState {
+    Pause,
+    Ship,
+}
 
-fn toggle_pause_menu(
-    mut commands: Commands,
-    keyboard: Res<Input<KeyCode>>,
-    game_state: Res<State<ui::MenuState>>,
-    mut next_game_state: ResMut<NextState<ui::MenuState>>,
-) {
-    if keyboard.just_pressed(KeyCode::Escape) {
-        let updated_state = ui::MenuState::toggle_pause(game_state.get());
-        match updated_state {
-            ui::MenuState::Pause => {
-                commands.spawn(NodeBundle {
-                    style: Style {
-                        width: Val::Percent(100.0),
-                        height: Val::Percent(100.0),
-                        justify_content: JustifyContent::SpaceBetween,
-                        ..default()
-                    },
-                    ..default()
-                });
-            }
-            _ => {}
-        }
-        next_game_state.set(updated_state);
+impl Default for MenuState {
+    fn default() -> Self {
+        Self::Ship
+    }
+}
+
+impl MenuState {
+    pub fn toggle_pause(current_state: &Self) -> Self {
+        let updated_state = match current_state {
+            Self::Pause => Self::Ship,
+            _ => Self::Pause,
+        };
+        println!("Updated menu state 👉 {:?}", updated_state);
+        updated_state
     }
 }
 
