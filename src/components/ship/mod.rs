@@ -37,13 +37,13 @@ pub struct EnemyShip;
 pub fn spawn_ship(
     marker: ShipMarker,
     name: &'static str,
-    mut commands: Commands,
-    asset_server: Res<AssetServer>,
+    location: Vec3,
+    commands: &mut Commands,
+    ship_handle: &Handle<Scene>,
 ) {
-    let ship_handle = asset_server.load("models/pirate_ship/dutch_ship_large_01_1k.gltf#Scene0");
-
     let mut ship = commands.spawn(ShipBundle {
         name: Name::new(name),
+        spatial_bundle: SpatialBundle::from_transform(Transform::from_translation(location)),
         ..default()
     });
 

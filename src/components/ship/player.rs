@@ -16,8 +16,16 @@ const CAMERA_MAX_PAN: (f32, f32) = (-40.0, 40.0);
 
 pub struct Systems;
 impl Systems {
-    pub fn spawn_ship(commands: Commands, asset_server: Res<AssetServer>) {
-        spawn_ship(ShipMarker::Player, "Eleanor", commands, asset_server);
+    pub fn spawn_ship(mut commands: Commands, asset_server: Res<AssetServer>) {
+        let ship_handle =
+            asset_server.load("models/pirate_ship/dutch_ship_large_01_1k.gltf#Scene0");
+        spawn_ship(
+            ShipMarker::Player,
+            "Eleanor",
+            Vec3::ZERO,
+            &mut commands,
+            &ship_handle,
+        );
     }
 
     pub fn movement(
