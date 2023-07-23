@@ -6,17 +6,6 @@ use super::button::{render_button_on_parent, render_text_on_parent, ButtonColors
 #[derive(Component)]
 pub struct PauseMenu;
 
-pub fn change_menu_state(
-    keyboard: Res<Input<KeyCode>>,
-    game_state: Res<State<MenuState>>,
-    mut next_game_state: ResMut<NextState<MenuState>>,
-) {
-    if keyboard.just_pressed(KeyCode::Escape) {
-        let updated_state = MenuState::toggle_pause(game_state.get());
-        next_game_state.set(updated_state);
-    }
-}
-
 pub fn render_pause_menu(mut commands: Commands) {
     commands
         .spawn((

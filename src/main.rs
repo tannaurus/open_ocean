@@ -58,7 +58,7 @@ impl Plugin for GameMechanics {
 pub struct Ui;
 impl Plugin for Ui {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, ui::pause::change_menu_state)
+        app.add_systems(Update, change_menu_state)
             .add_systems(OnEnter(MenuState::Pause), ui::pause::render_pause_menu)
             .add_systems(OnExit(MenuState::Pause), ui::pause::close_pause_menu)
             .add_systems(
@@ -83,12 +83,22 @@ impl Default for MenuState {
 
 impl MenuState {
     pub fn toggle_pause(current_state: &Self) -> Self {
-        let updated_state = match current_state {
+        match current_state {
             Self::Pause => Self::Ship,
             _ => Self::Pause,
-        };
+        }
+    }
+}
+
+pub fn change_menu_state(
+    keyboard: Res<Input<KeyCode>>,
+    game_state: Res<State<MenuState>>,
+    mut next_game_state: ResMut<NextState<MenuState>>,
+) {
+    if keyboard.just_pressed(KeyCode::Escape) {
+        let updated_state = MenuState::toggle_pause(game_state.get());
         println!("Updated menu state 👉 {:?}", updated_state);
-        updated_state
+        next_game_state.set(updated_state);
     }
 }
 
