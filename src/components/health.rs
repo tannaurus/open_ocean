@@ -28,6 +28,7 @@ impl Health {
         if self.current_health - amount <= 0.0 {
             self.dead = true;
             self.current_health = 0.0;
+            println!("I'm dead!");
             return;
         }
 

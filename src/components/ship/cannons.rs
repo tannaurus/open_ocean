@@ -1,11 +1,18 @@
+use crate::components::collider_group::AsCollisionGroups;
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use std::time::Duration;
 
 const CANNON_SPEED: f32 = 100.0;
 
+pub enum CannonMarker {
+    Player,
+    Enemy,
+}
+
 #[derive(Component)]
 pub struct Cannons {
+    cannon_marker: CannonMarker,
     reload_speed: u64,
     left_last_launched: Duration,
     right_last_launched: Duration,
@@ -14,6 +21,7 @@ pub struct Cannons {
 impl Default for Cannons {
     fn default() -> Self {
         Self {
+            cannon_marker: CannonMarker::Player,
             reload_speed: 3,
             left_last_launched: Duration::from_secs(0),
             right_last_launched: Duration::from_secs(0),
@@ -50,7 +58,7 @@ impl Cannons {
                 }
             }
         }
-        let instance = CannonBall::instance(ship_transform, direction);
+        let instance = CannonBall::instance(&self.cannon_marker, ship_transform, direction);
         commands.spawn(CannonBall::adjust_fire_location(instance.clone(), -10.0));
         commands.spawn(CannonBall::adjust_fire_location(instance.clone(), -5.0));
         commands.spawn(instance);
@@ -65,6 +73,7 @@ struct CannonBall {
     velocity: Velocity,
     transform: TransformBundle,
     gravity: GravityScale,
+    collision_group: CollisionGroups,
 }
 
 pub enum CannonDirection {
@@ -82,7 +91,11 @@ impl CannonDirection {
 }
 
 impl CannonBall {
-    fn instance(ship_transform: &Transform, direction: CannonDirection) -> Self {
+    fn instance(
+        cannon_marker: &CannonMarker,
+        ship_transform: &Transform,
+        direction: CannonDirection,
+    ) -> Self {
         let mut transform = TransformBundle::from(ship_transform.clone());
         // Adjust launch height so they don't launch below the water line
         transform.local.translation += Vec3::new(0.0, 2.0, 0.0);
@@ -97,6 +110,7 @@ impl CannonBall {
             },
             transform,
             gravity: GravityScale(3.0),
+            collision_group: cannon_marker.as_collision_groups(),
         }
     }
 

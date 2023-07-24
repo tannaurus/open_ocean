@@ -1,9 +1,10 @@
-use super::{health::Health, id::Name};
+use super::{collider_group::AsCollisionGroups, health::Health, id::Name};
 use bevy::prelude::*;
+use bevy_rapier3d::prelude::{Collider, CollisionGroups};
 use cannons::Cannons;
 
 mod camera;
-mod cannons;
+pub mod cannons;
 pub mod enemy;
 pub mod player;
 mod sails;
@@ -12,7 +13,9 @@ mod sails;
 pub struct ShipBundle {
     name: Name,
     spatial_bundle: SpatialBundle,
+    collider: Collider,
     ship: Ship,
+    collision_group: CollisionGroups,
 }
 
 #[derive(Component, Default)]
@@ -40,10 +43,13 @@ pub fn spawn_ship(
     location: Vec3,
     commands: &mut Commands,
     ship_handle: &Handle<Scene>,
+    ship_collider: Collider,
 ) {
     let mut ship = commands.spawn(ShipBundle {
         name: Name::new(name),
         spatial_bundle: SpatialBundle::from_transform(Transform::from_translation(location)),
+        collider: ship_collider,
+        collision_group: marker.as_collision_groups(),
         ..default()
     });
 

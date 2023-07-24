@@ -1,6 +1,7 @@
 use std::f32::consts::TAU;
 
 use bevy::{input::mouse::MouseMotion, prelude::*};
+use bevy_rapier3d::prelude::Collider;
 
 use super::camera::ShipCamera;
 use super::cannons::CannonDirection;
@@ -17,14 +18,16 @@ const CAMERA_MAX_PAN: (f32, f32) = (-40.0, 40.0);
 pub struct Systems;
 impl Systems {
     pub fn spawn_ship(mut commands: Commands, asset_server: Res<AssetServer>) {
-        let ship_handle =
+        let ship_handle: Handle<Scene> =
             asset_server.load("models/pirate_ship/dutch_ship_large_01_1k.gltf#Scene0");
+        let ship_collider = Collider::cuboid(8.0, 15.0, 10.0);
         spawn_ship(
             ShipMarker::Player,
             "Eleanor",
             Vec3::ZERO,
             &mut commands,
             &ship_handle,
+            ship_collider,
         );
     }
 

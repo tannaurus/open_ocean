@@ -25,6 +25,9 @@ fn main() {
         .insert_resource(WaterSettings {
             height: 1.0,
             amplitude: 2.0,
+            clarity: 0.125,
+            base_color: Color::rgba(0.0, 0.75, 1.0, 0.2),
+            deep_color: Color::rgba(0.0, 0.75, 1.0, 0.2),
             ..Default::default()
         })
         // Core game plugins
