@@ -1,13 +1,13 @@
 use std::f32::consts::TAU;
 
 use bevy::{input::mouse::MouseMotion, prelude::*};
-use bevy_rapier3d::prelude::Collider;
+use bevy_rapier3d::prelude::{Collider, Velocity};
 
 use super::camera::ShipCamera;
 use super::cannons::CannonDirection;
 use super::{spawn_ship, PlayerShip, Ship, ShipMarker};
 
-const SHIP_SPEED: f32 = 6.0;
+const SHIP_SPEED: f32 = 20.0;
 // Base ship turn speed. Will be modified by the ship's velocity.
 const SHIP_TURN_SPEED: (f32, f32) = (-0.05, 0.05);
 const CAMERA_SPEED: f32 = 1.0;
@@ -32,11 +32,11 @@ impl Systems {
     }
 
     pub fn movement(
-        mut ship: Query<(&mut Transform, &mut Ship), With<PlayerShip>>,
+        mut ship: Query<(&mut Transform, &mut Velocity, &mut Ship), With<PlayerShip>>,
         keyboard: Res<Input<KeyCode>>,
         time: Res<Time>,
     ) {
-        let (mut ship, mut ship_state) = ship.single_mut();
+        let (mut ship, mut ship_velocity, mut ship_state) = ship.single_mut();
 
         // Change sails position
         if keyboard.just_pressed(KeyCode::W) {
@@ -62,13 +62,12 @@ impl Systems {
             );
         }
 
-        let ship_offset = Vec3::ZERO
-            + ship_state.sails.as_forward_speed(ship.forward().clone())
-                * SHIP_SPEED
-                * time.delta_seconds();
+        let ship_offset = SHIP_SPEED * ship_state.sails.as_forward_speed(ship.forward());
 
-        // Update player position based on input
-        ship.translation += ship_offset;
+        *ship_velocity = Velocity {
+            linvel: ship_offset,
+            angvel: Vec3::ZERO,
+        };
     }
 
     pub fn camera(

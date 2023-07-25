@@ -1,6 +1,8 @@
 use super::{collider_group::AsCollisionGroups, health::Health, id::Name};
 use bevy::prelude::*;
-use bevy_rapier3d::prelude::{Collider, CollisionGroups};
+use bevy_rapier3d::prelude::{
+    AdditionalMassProperties, Collider, CollisionGroups, Damping, LockedAxes, RigidBody, Velocity,
+};
 use cannons::Cannons;
 
 mod camera;
@@ -16,6 +18,11 @@ pub struct ShipBundle {
     collider: Collider,
     ship: Ship,
     collision_group: CollisionGroups,
+    rigidbody: RigidBody,
+    locked_axis: LockedAxes,
+    mass: AdditionalMassProperties,
+    velocity: Velocity,
+    damping: Damping,
 }
 
 #[derive(Component, Default)]
@@ -25,10 +32,16 @@ pub struct Ship {
     cannons: Cannons,
 }
 
-#[derive(PartialEq, Clone)]
+#[derive(PartialEq, Clone, Component)]
 pub enum ShipMarker {
     Player,
     Enemy,
+}
+
+impl Default for ShipMarker {
+    fn default() -> Self {
+        Self::Player
+    }
 }
 
 #[derive(Component)]
@@ -50,6 +63,15 @@ pub fn spawn_ship(
         spatial_bundle: SpatialBundle::from_transform(Transform::from_translation(location)),
         collider: ship_collider,
         collision_group: marker.as_collision_groups(),
+        rigidbody: RigidBody::Dynamic,
+        locked_axis: LockedAxes::TRANSLATION_LOCKED_Y
+            | LockedAxes::ROTATION_LOCKED_X
+            | LockedAxes::ROTATION_LOCKED_Z,
+        mass: AdditionalMassProperties::Mass(2000.0),
+        damping: Damping {
+            linear_damping: 100.0,
+            angular_damping: 20.0,
+        },
         ..default()
     });
 
@@ -69,7 +91,7 @@ pub fn spawn_ship(
 
     if marker == ShipMarker::Player {
         ship.with_children(|parent| {
-            // spawn ship camera
+            // Spawn ship camera
             parent.spawn(camera::ShipCameraBundle::default());
         });
     }

@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-#[derive(PartialEq, PartialOrd)]
+#[derive(PartialEq, PartialOrd, Debug)]
 pub enum SailState {
     None,
     Mid,
@@ -33,14 +33,14 @@ impl SailState {
     pub fn as_forward_speed(&self, ship_forward: Vec3) -> Vec3 {
         match self {
             Self::None => Vec3::ZERO,
-            Self::Mid => ship_forward * 2.0,
-            Self::Full => ship_forward * 4.0,
+            Self::Mid => ship_forward * 1.0,
+            Self::Full => ship_forward * 1.5,
         }
     }
 
     pub fn as_rotation_speed(&self) -> f32 {
         match self {
-            Self::None => 0.1,
+            Self::None => 0.125,
             Self::Mid => 0.5,
             Self::Full => 1.0,
         }

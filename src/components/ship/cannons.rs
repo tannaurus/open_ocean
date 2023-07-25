@@ -12,7 +12,7 @@ pub enum CannonMarker {
 
 #[derive(Component)]
 pub struct Cannons {
-    cannon_marker: CannonMarker,
+    marker: CannonMarker,
     reload_speed: u64,
     left_last_launched: Duration,
     right_last_launched: Duration,
@@ -21,7 +21,7 @@ pub struct Cannons {
 impl Default for Cannons {
     fn default() -> Self {
         Self {
-            cannon_marker: CannonMarker::Player,
+            marker: CannonMarker::Player,
             reload_speed: 3,
             left_last_launched: Duration::from_secs(0),
             right_last_launched: Duration::from_secs(0),
@@ -58,7 +58,7 @@ impl Cannons {
                 }
             }
         }
-        let instance = CannonBall::instance(&self.cannon_marker, ship_transform, direction);
+        let instance = CannonBall::instance(&self.marker, ship_transform, direction);
         commands.spawn(CannonBall::adjust_fire_location(instance.clone(), -10.0));
         commands.spawn(CannonBall::adjust_fire_location(instance.clone(), -5.0));
         commands.spawn(instance);
