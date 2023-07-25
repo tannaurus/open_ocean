@@ -13,5 +13,5 @@ A 4 day hackathon in the Bevy game engine
 - No health system, despite the code suggesting there is 😄
 
 # Video
-https://github.com/tannaurus/open_ocean/assets/25316168/4cc9308c-53cc-414c-82dc-2fb25e54d0d2
+https://github.com/tannaurus/open_ocean/assets/25316168/2a7194fe-d0bb-4a26-986d-63512dbf2496
 
